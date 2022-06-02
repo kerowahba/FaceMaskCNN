@@ -9,20 +9,27 @@ from keras.layers import Flatten, Dense, Conv2D, MaxPooling2D, Dropout
 from keras.models import Sequential
 from mtcnn import MTCNN
 
+# Maximize the usage of the CPU
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-images = os.path.join("./MedicalMask/images")
+
+trainImages = os.path.join("./MedicalMask/trainImages")
+testImages = os.path.join("./MedicalMask/testImages")
+
 train = pd.read_csv(os.path.join("./train.csv"))
 submission = pd.read_csv(os.path.join("./submission.csv"))
 
-imagesFolder = os.listdir(images)
-imagesFolder.sort()
+trainFolder = os.listdir(trainImages)
+trainFolder.sort()
 
-train_images = imagesFolder[602:]
-test_images = imagesFolder[1:602]
+testFolder = os.listdir(testImages)
+testFolder.sort()
+
+train_images = trainFolder[1:]
+test_images = testFolder[1:]
 
 print("The Dataset has %d faces, that includes the 4 required classes "
       "and many more others that will be disregarded, distributed among %d images \n"
-      % ((len(train) + len(submission)), len(imagesFolder)))
+      % ((len(train) + len(submission)), len(trainFolder)))
 
 print("The Training Dataset has %d faces, distributed among %d images\n"
       % (len(train), len(train_images)))
@@ -32,13 +39,13 @@ print("The Test Dataset has %d faces, distributed among %d images\n"
 
 # NOTE: test_images ranges from [0, 600]
 # NOTE: starts from Image name 0001 --> 0633
-img = plot.imread(os.path.join(images, test_images[3]))
+img = plot.imread(os.path.join(testImages, test_images[3]))
 plot.imshow(img)
 plot.show()
 
 # NOTE: train_images ranges from [0, 1479]
 # NOTE: starts from Image name 1800 --> 3400
-img = plot.imread(os.path.join(images, train_images[10]))
+img = plot.imread(os.path.join(trainImages, train_images[10]))
 plot.imshow(img)
 plot.show()
 
@@ -72,7 +79,7 @@ def get_boxes(id):
 
 # Printing image with position 10 among the training images set.
 image = train_images[10]
-img = plot.imread(os.path.join(images, image))
+img = plot.imread(os.path.join(trainImages, image))
 
 # Extracting the axis from the plotted image and append them on current picture.
 _, axis = plot.subplots(1)
@@ -102,7 +109,7 @@ def create_data():
         tempData = []
         for j in train.iloc[i]:
             tempData.append(j)
-        img_array = cv2.imread(os.path.join(images, tempData[0]), cv2.IMREAD_GRAYSCALE)
+        img_array = cv2.imread(os.path.join(trainImages, tempData[0]), cv2.IMREAD_GRAYSCALE)
         crop_image = img_array[tempData[2]:tempData[4], tempData[1]:tempData[3]]
         new_img_array = cv2.resize(crop_image, (img_size, img_size))
         data.append([new_img_array, tempData[5]])
@@ -155,7 +162,7 @@ model.fit(x, y, epochs=numEpochs, batch_size=5)
 
 # Testing for Mask Detection in image 3 in the Test dataset
 detector = MTCNN()
-img = plot.imread(os.path.join(images, test_images[3]))
+img = plot.imread(os.path.join(testImages, test_images[3]))
 face = detector.detect_faces(img)
 for face in face:
     bounding_box = face['box']
